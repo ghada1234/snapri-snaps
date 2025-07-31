@@ -1,100 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Two Directional Camera Capture & Analyze</title>
-    <style>
-        video {
-            border: 1px solid #ddd;
-            display: block;
-            margin-bottom: 10px;
-        }
-        #canvas {
-            border: 1px solid #ddd;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Analyzer</title>
+  <style>
+    #video { 
+      border: 1px solid black; 
+      width: 100%; 
+    }
+    #result { 
+      margin-top: 20px; 
+    }
+  </style>
 </head>
 <body>
-    <h1>Camera Feed</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <button id="captureButton">Capture</button>
-    <button id="switchCameraButton">Switch Camera</button>
-    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
-    <img id="capturedImage" alt="Captured Image" style="display: none; margin-top: 20px;"/>
-    <div id="analysisResult" style="margin-top: 20px;"></div>
+  <h1>Meal Analyzer</h1>
 
-    <script>
-        // Elements
-        const videoElement = document.getElementById('video');
-        const captureButton = document.getElementById('captureButton');
-        const switchCameraButton = document.getElementById('switchCameraButton');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const capturedImage = document.getElementById('capturedImage');
-        const analysisResult = document.getElementById('analysisResult');
+  <!-- Video feed to display the camera -->
+  <video id="video" autoplay></video>
 
-        let currentStream;
-        let currentCamera = 'user'; // Default to front camera
+  <!-- Capture button to take a snapshot -->
+  <button id="capture">Capture Meal</button>
 
-        // Start camera stream
-        async function startCamera() {
-            // Stop previous stream if exists
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+  <!-- Hidden canvas to process image data -->
+  <canvas id="canvas" style="display: none;"></canvas>
 
-            const constraints = {
-                video: {
-                    facingMode: currentCamera, // Switch between 'user' (front) and 'environment' (back)
-                }
-            };
+  <!-- Results will be displayed here -->
+  <div id="result"></div>
 
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = currentStream;
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-            }
-        }
+  <!-- Add Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
 
-        // Switch between front and back cameras
-        switchCameraButton.addEventListener('click', () => {
-            currentCamera = (currentCamera === 'user') ? 'environment' : 'user';
-            startCamera();
+  <script>
+    // Access the camera and display the live feed
+    const video = document.getElementById('video');
+    const captureButton = document.getElementById('capture');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const resultDiv = document.getElementById('result');
+
+    // Function to start the camera
+    async function startCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    // Capture image from the camera feed
+    captureButton.addEventListener('click', () => {
+      // Set canvas size to match video size
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Get image data in base64 format
+      const imageData = canvas.toDataURL('image/jpeg');
+      
+      // Analyze the meal from the captured image
+      analyzeMeal(imageData);
+    });
+
+    // Start the camera feed when the page loads
+    startCamera();
+
+    // Use Tesseract.js to perform OCR and extract text (ingredients)
+    async function analyzeMeal(imageData) {
+      try {
+        const result = await Tesseract.recognize(imageData, 'eng', {
+          logger: (m) => console.log(m), // Logs progress in console
         });
+        
+        const recognizedText = result.data.text;
+        console.log('Recognized Text:', recognizedText);
 
-        // Capture button click
-        captureButton.addEventListener('click', () => {
-            // Draw the video frame onto the canvas
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        // Now, send the recognized ingredients to Nutritionix API for nutrition analysis
+        getNutritionalInfo(recognizedText);
+      } catch (error) {
+        console.error('Error analyzing the image:', error);
+      }
+    }
 
-            // Show the captured image
-            const imageUrl = canvas.toDataURL('image/png');
-            capturedImage.src = imageUrl;
-            capturedImage.style.display = 'block'; // Show the captured image
+    // Function to get nutritional data from Nutritionix API
+    async function getNutritionalInfo(ingredients) {
+      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';
+      const appId = 'bbd2d85e';  // Replace with your Nutritionix App ID
 
-            // Analyze the image (Placeholder for image analysis)
-            analyzeImage(imageUrl);
-        });
+      const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'x-app-id': appId,  // Replace with your app ID
+          'x-app-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: ingredients }),
+      });
 
-        // Placeholder function for analyzing the captured image
-        function analyzeImage(imageUrl) {
-            // Example: Placeholder function to analyze the image (e.g., using an API like Nutritionix or a machine learning model)
-            analysisResult.innerHTML = "Analyzing your image... (this is a placeholder analysis)";
+      const data = await response.json();
+      
+      // Handle API response and display results
+      if (data.foods && data.foods[0]) {
+        displayNutritionalInfo(data.foods[0]);
+      } else {
+        resultDiv.innerHTML = 'Could not retrieve nutritional information. Please try again.';
+      }
+    }
 
-            // Simulating analysis result after a delay
-            setTimeout(() => {
-                analysisResult.innerHTML = `
-                    <strong>Analysis Results:</strong>
-                    <p>This is a placeholder. Actual analysis would give information on the food, nutritional facts, etc.</p>
-                    <img src="${imageUrl}" alt="Analyzed Image" width="200"/>
-                `;
-            }, 2000); // Simulating 2-second delay for analysis
-        }
-
-        // Start camera when the page is loaded
-        startCamera();
-    </script>
+    // Function to display nutritional information
+    function displayNutritionalInfo(food) {
+      resultDiv.innerHTML = `
+        <h3>Meal Analysis</h3>
+        <p><strong>Ingredients:</strong> ${food.food_name}</p>
+        <p><strong>Calories:</strong> ${food.nf_calories} kcal</p>
+        <p><strong>Protein:</strong> ${food.nf_protein}g</p>
+        <p><strong>Carbs:</strong> ${food.nf_total_carbohydrate}g</p>
+        <p><strong>Fat:</strong> ${food.nf_total_fat}g</p>
+        <p><strong>Serving Size:</strong> ${food.serving_size_qty} ${food.serving_size_unit}</p>
+      `;
+    }
+  </script>
 </body>
 </html>
