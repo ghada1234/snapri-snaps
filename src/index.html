@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini Meal Analyzer</title>
+  <title>Gemini Meal Analyzer - 2-Direction Camera</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -42,8 +42,8 @@
 </head>
 <body>
 
-  <h1>Gemini Meal Analyzer</h1>
-  <p>Capture your meal and analyze its nutritional information based on your dietary preferences!</p>
+  <h1>Gemini Meal Analyzer - 2-Direction Camera</h1>
+  <p>Capture your meal from either front or rear camera and analyze its nutritional information!</p>
 
   <!-- Dropdown for meal type -->
   <label for="mealType">Select Meal Type:</label>
@@ -64,6 +64,9 @@
   <!-- Button to capture meal -->
   <button id="capture">Capture Meal</button>
 
+  <!-- Button to switch between front and rear camera -->
+  <button id="switchCamera">Switch Camera</button>
+
   <!-- Hidden canvas to capture image data -->
   <canvas id="canvas" style="display: none;"></canvas>
 
@@ -74,8 +77,11 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
 
   <script>
+    let currentStream = null;
+    let currentCamera = 0; // 0 for rear, 1 for front camera
     const video = document.getElementById('video');
     const captureButton = document.getElementById('capture');
+    const switchButton = document.getElementById('switchCamera');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const resultDiv = document.getElementById('result');
@@ -83,11 +89,29 @@
     const preferencesInput = document.getElementById('preferences');
 
     // Start the camera feed
-    async function startCamera() {
+    async function startCamera(cameraIndex = 0) {
+      // Stop current stream if it's active
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+        if (videoDevices.length > 0) {
+          const constraints = {
+            video: { deviceId: videoDevices[cameraIndex].deviceId }
+          };
+
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = stream;
+          currentStream = stream;
+        } else {
+          resultDiv.innerHTML = 'No camera found.';
+        }
       } catch (error) {
+        console.error('Error accessing the camera:', error);
         resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
       }
     }
@@ -101,8 +125,14 @@
       analyzeMeal(imageData);
     });
 
-    // Start the camera feed when the page loads
-    startCamera();
+    // Switch between front and rear camera
+    switchButton.addEventListener('click', () => {
+      currentCamera = (currentCamera + 1) % 2;  // Toggle between 0 and 1
+      startCamera(currentCamera);
+    });
+
+    // Start the camera feed when the page loads (default to rear camera)
+    startCamera(currentCamera);
 
     // Analyze the meal image using Tesseract.js for OCR
     async function analyzeMeal(imageData) {
