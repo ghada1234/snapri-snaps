@@ -1,80 +1,126 @@
- import React, { useState } from 'react';
- import axios from 'axios';
- import './MealUpload.css';
- 
- const MealUpload = () => {
- // Nutritionix API details
-        const appId = 'bbd2d85e';  // Replace with your Nutritionix App ID
-        const appKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your Nutritionix App Key
+import React, { useState } from 'react';
+import Tesseract from 'tesseract.js';
+import MealUpload from './MealUploadcss'
+const MealUpload = () => {
+  // States to handle image, OCR result, and nutritional info
+  const [image, setImage] = useState(null);
+  const [ocrResult, setOcrResult] = useState('');
+  const [nutritionalInfo, setNutritionalInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-        // Accessing camera and setting up video stream
-        const videoElement = document.getElementById('camera');
-        const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('capture-btn');
-        const nutritionInfoDiv = document.getElementById('nutrition-info');
-        
-        // Get user media (camera)
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                videoElement.srcObject = stream;
-            })
-            .catch(error => {
-                console.error('Error accessing the camera:', error);
-            });
+  // Handle image upload
+  const handleImageUpload = (e) => {
+    setImage(URL.createObjectURL(e.target.files[0]));
+  };
 
-        // Function to capture image from camera
-        captureButton.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-            const imageDataUrl = canvas.toDataURL('image/png');
-            analyzeImage(imageDataUrl);  // Analyze the captured image
-        });
+  // Handle OCR analysis
+  const handleAnalyzeMeal = async () => {
+    if (!image) {
+      setError('Please upload an image first.');
+      return;
+    }
 
-        // Function to analyze the food image using Nutritionix API
-        async function analyzeImage(imageDataUrl) {
-            try {
-                // You can replace 'apple' with the detected food item
-                const foodDescription = 'apple';  // Placeholder for food detection
-                const response = await fetch(`https://api.nutritionix.com/v1_1/search/${encodeURIComponent(foodDescription)}?appId=${appId}&appKey=${appKey}`, {
-                    method: 'GET',
-                    headers: {
-                        'x-app-id': appId,
-                        'x-app-key': appKey,
-                    }
-                });
+    setLoading(true);
+    setError('');
+    setOcrResult('');
 
-                const data = await response.json();
-                displayNutritionInfo(data);
-            } catch (error) {
-                console.error('Error analyzing image:', error);
-                alert('Error analyzing the image. Please try again.');
-            }
-        }
+    try {
+      // OCR Process using Tesseract.js
+      const result = await Tesseract.recognize(image, 'eng', {
+        logger: (m) => console.log(m),
+      });
 
-        // Function to display nutrition info
-        function displayNutritionInfo(data) {
-            nutritionInfoDiv.innerHTML = '';
-            if (data.hits && data.hits.length > 0) {
-                const food = data.hits[0].fields;  // Get first result
+      const recognizedText = result.data.text;
+      setOcrResult(recognizedText);
 
-                const nutritionList = `
-                    <h2>Nutrition Information for ${food.item_name}</h2>
-                    <ul>
-                        <li><strong>Calories:</strong> ${food.nf_calories} kcal</li>
-                        <li><strong>Protein:</strong> ${food.nf_protein} g</li>
-                        <li><strong>Carbohydrates:</strong> ${food.nf_total_carbohydrate} g</li>
-                        <li><strong>Fat:</strong> ${food.nf_total_fat} g</li>
-                        <li><strong>Fiber:</strong> ${food.nf_dietary_fiber} g</li>
-                        <li><strong>Sugars:</strong> ${food.nf_sugars} g</li>
-                    </ul>
-                `;
-                nutritionInfoDiv.innerHTML = nutritionList;
-                nutritionInfoDiv.style.display = 'block';
-            } else {
-                nutritionInfoDiv.innerHTML = `<p>No data found for the recognized food. Please try again with a clearer image or food name.</p>`;
-                nutritionInfoDiv.style.display = 'block';
-            }
-        }
-
+      if (!recognizedText.trim()) {
+        setError('No ingredients detected. Please upload a clearer image.');
+        setLoading(false);
+        return;
       }
-      export default MealUpload;
+
+      // Fetch nutritional information
+      getNutritionalInfo(recognizedText);
+    } catch (error) {
+      setError('Error during OCR processing. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  // Fetch nutritional information from Nutritionix API
+  const getNutritionalInfo = async (ingredients) => {
+    const apiKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your API key
+    const appId = 'bbd2d85e
+
+'; // Replace with your App ID
+
+    const formattedIngredients = ingredients.split(',').map(item => item.trim()).join(', ');
+
+    try {
+      const response = await fetch('https://trackapi.nutritionix.com/v2/natural/nutrients', {
+        method: 'POST',
+        headers: {
+          'x-app-id': appId,
+          'x-app-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: formattedIngredients }),
+      });
+
+      const data = await response.json();
+      if (data.foods && data.foods[0]) {
+        setNutritionalInfo(data.foods[0]);
+      } else {
+        setError('Could not retrieve nutritional information. Please check the ingredients or try again.');
+      }
+    } catch (error) {
+      setError('Error fetching nutritional information. Please try again later.');
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '20px' }}>
+      <h1>Meal Analyzer - Upload Image</h1>
+      <p>Upload an image of your meal, and we'll analyze the ingredients and nutritional information!</p>
+
+      {/* Image Upload Input */}
+      <input type="file" accept="image/*" onChange={handleImageUpload} />
+      <br />
+
+      {/* Analyze Meal Button */}
+      <button onClick={handleAnalyzeMeal} style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}>
+        Analyze Meal
+      </button>
+
+      {/* Loading and Error States */}
+      {loading && <p>Analyzing image... Please wait.</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* Display OCR Result */}
+      {ocrResult && !loading && (
+        <div>
+          <h3>OCR Result (Ingredients Extracted):</h3>
+          <p>{ocrResult}</p>
+        </div>
+      )}
+
+      {/* Display Nutritional Information */}
+      {nutritionalInfo && (
+        <div>
+          <h3>Meal Analysis</h3>
+          <p><strong>Ingredients:</strong> {nutritionalInfo.food_name}</p>
+          <p><strong>Calories:</strong> {nutritionalInfo.nf_calories} kcal</p>
+          <p><strong>Protein:</strong> {nutritionalInfo.nf_protein}g</p>
+          <p><strong>Carbs:</strong> {nutritionalInfo.nf_total_carbohydrate}g</p>
+          <p><strong>Fat:</strong> {nutritionalInfo.nf_total_fat}g</p>
+          <p><strong>Serving Size:</strong> {nutritionalInfo.serving_size_qty} {nutritionalInfo.serving_size_unit}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MealUpload;
