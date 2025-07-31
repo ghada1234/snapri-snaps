@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
-import MealUpload from './MealUpload.css';
 const MealUpload = () => {
   // States to handle image, OCR result, and nutritional info
   const [image, setImage] = useState(null);
