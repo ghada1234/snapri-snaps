@@ -47,6 +47,7 @@
 
   <!-- Hidden canvas to capture image data -->
   <canvas id="canvas" style="display: none;"></canvas>
+<video id="video" autoplay width="640" height="480" style="border: 1px solid black;"></video>
 
   <!-- Area to display the results -->
   <div id="result"></div>
@@ -170,6 +171,31 @@
         <p><strong>Serving Size:</strong> ${food.serving_size_qty} ${food.serving_size_unit}</p>
       `;
     }
+    // Start the camera feed
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+    // Check if the video element is loaded
+    const videoElement = document.getElementById('video');
+    videoElement.srcObject = stream;
+
+    // Handle video element errors
+    videoElement.onloadedmetadata = () => {
+      videoElement.play();
+    };
+
+    videoElement.onerror = (err) => {
+      console.error('Error loading camera stream:', err);
+      resultDiv.innerHTML = 'Error accessing the camera. Please check permissions.';
+    };
+
+  } catch (error) {
+    console.error('Error accessing the camera:', error);
+    resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
+  }
+}
+
   </script>
 
 </body>
