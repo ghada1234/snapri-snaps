@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
-const MealUpload = () => {
+
+const MealAnalyzer = () => {
   // States to handle image, OCR result, and nutritional info
   const [image, setImage] = useState(null);
   const [ocrResult, setOcrResult] = useState('');
@@ -40,7 +41,7 @@ const MealUpload = () => {
       }
 
       // Fetch nutritional information
-      getNutritionalInfo(recognizedText);
+      await getNutritionalInfo(recognizedText);
     } catch (error) {
       setError('Error during OCR processing. Please try again.');
       setLoading(false);
@@ -50,9 +51,7 @@ const MealUpload = () => {
   // Fetch nutritional information from Nutritionix API
   const getNutritionalInfo = async (ingredients) => {
     const apiKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your API key
-    const appId = 'bbd2d85e
-
-'; // Replace with your App ID
+    const appId = 'bbd2d85e'; // Replace with your App ID
 
     const formattedIngredients = ingredients.split(',').map(item => item.trim()).join(', ');
 
@@ -68,6 +67,8 @@ const MealUpload = () => {
       });
 
       const data = await response.json();
+      console.log('Nutritionix API Response:', data);  // Log the API response for debugging
+
       if (data.foods && data.foods[0]) {
         setNutritionalInfo(data.foods[0]);
       } else {
@@ -122,4 +123,4 @@ const MealUpload = () => {
   );
 };
 
-export default MealUpload;
+export default MealAnalyzer;
