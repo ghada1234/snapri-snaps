@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meal Analyzer</title>
+  <title>Gemini Meal Analyzer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -32,15 +32,34 @@
     button:hover {
       background-color: #45a049;
     }
+    select, input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 60%;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Meal Analyzer</h1>
-  <p>Capture an image of your meal and let us analyze its nutritional information!</p>
+  <h1>Gemini Meal Analyzer</h1>
+  <p>Capture your meal and analyze its nutritional information based on your dietary preferences!</p>
+
+  <!-- Dropdown for meal type -->
+  <label for="mealType">Select Meal Type:</label>
+  <select id="mealType">
+    <option value="breakfast">Breakfast</option>
+    <option value="lunch">Lunch</option>
+    <option value="dinner">Dinner</option>
+    <option value="snack">Snack</option>
+  </select>
+
+  <!-- Text input for dietary preferences -->
+  <label for="preferences">Dietary Preferences (e.g., vegan, keto):</label>
+  <input type="text" id="preferences" placeholder="Enter your preferences">
 
   <!-- Video feed for the camera -->
-  <video id="video" autoplay width="640" height="480" style="border: 1px solid black;"></video>
+  <video id="video" autoplay></video>
   
   <!-- Button to capture meal -->
   <button id="capture">Capture Meal</button>
@@ -55,51 +74,30 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
 
   <script>
-    // Get references to HTML elements
     const video = document.getElementById('video');
     const captureButton = document.getElementById('capture');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const resultDiv = document.getElementById('result');
+    const mealTypeSelect = document.getElementById('mealType');
+    const preferencesInput = document.getElementById('preferences');
 
     // Start the camera feed
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-        // Check if the video element is loaded
-        const videoElement = document.getElementById('video');
-        videoElement.srcObject = stream;
-
-        // Handle video element errors
-        videoElement.onloadedmetadata = () => {
-          videoElement.play();
-        };
-
-        videoElement.onerror = (err) => {
-          console.error('Error loading camera stream:', err);
-          resultDiv.innerHTML = 'Error accessing the camera. Please check permissions.';
-        };
-
+        video.srcObject = stream;
       } catch (error) {
-        console.error('Error accessing the camera:', error);
         resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
       }
     }
 
     // Capture the image when the button is clicked
     captureButton.addEventListener('click', () => {
-      // Set canvas size to match the video feed dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      // Draw the current video frame onto the canvas
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // Convert the image to base64 format for OCR processing
       const imageData = canvas.toDataURL('image/jpeg');
-
-      // Analyze the captured meal image
       analyzeMeal(imageData);
     });
 
@@ -109,7 +107,6 @@
     // Analyze the meal image using Tesseract.js for OCR
     async function analyzeMeal(imageData) {
       resultDiv.innerHTML = 'Analyzing image... Please wait.';
-      
       try {
         const result = await Tesseract.recognize(imageData, 'eng', {
           logger: (m) => console.log(m),
@@ -118,7 +115,7 @@
         const recognizedText = result.data.text;
         console.log('Recognized Text:', recognizedText);
 
-        // Now, get nutritional information for the recognized ingredients
+        // Now, get nutritional information based on recognized text and preferences
         getNutritionalInfo(recognizedText);
       } catch (error) {
         console.error('Error during OCR processing:', error);
@@ -126,15 +123,18 @@
       }
     }
 
-    // Function to get nutritional info from Nutritionix API
+    // Function to get nutritional info from Nutritionix API (Personalized)
     async function getNutritionalInfo(ingredients) {
       if (!ingredients) {
         resultDiv.innerHTML = 'No ingredients detected. Please capture a clear image.';
         return;
       }
 
-      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';  // Replace with your API key
-      const appId = 'bbd2d85e';  // Replace with your app ID
+      const mealType = mealTypeSelect.value;
+      const preferences = preferencesInput.value;
+
+      const apiKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your API key
+      const appId = 'bbd2d85e'; // Replace with your App ID
 
       const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
 
@@ -150,51 +150,28 @@
 
       const data = await response.json();
 
-      // Handle the response and display nutritional info
+      // Display results based on meal type and preferences
       if (data.foods && data.foods[0]) {
-        displayNutritionalInfo(data.foods[0]);
+        const food = data.foods[0];
+        displayNutritionalInfo(food, mealType, preferences);
       } else {
         resultDiv.innerHTML = 'Could not retrieve nutritional information. Please try again.';
       }
     }
 
-    // Function to display nutritional information on the page
-    function displayNutritionalInfo(food) {
+    // Function to display personalized nutritional information
+    function displayNutritionalInfo(food, mealType, preferences) {
       resultDiv.innerHTML = `
-        <h3>Meal Analysis</h3>
+        <h3>${mealType.charAt(0).toUpperCase() + mealType.slice(1)} Analysis</h3>
         <p><strong>Ingredients:</strong> ${food.food_name}</p>
         <p><strong>Calories:</strong> ${food.nf_calories} kcal</p>
         <p><strong>Protein:</strong> ${food.nf_protein}g</p>
         <p><strong>Carbs:</strong> ${food.nf_total_carbohydrate}g</p>
         <p><strong>Fat:</strong> ${food.nf_total_fat}g</p>
         <p><strong>Serving Size:</strong> ${food.serving_size_qty} ${food.serving_size_unit}</p>
+        <p><strong>Dietary Preferences:</strong> ${preferences || 'None specified'}</p>
       `;
     }
-    // Start the camera feed
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-    // Check if the video element is loaded
-    const videoElement = document.getElementById('video');
-    videoElement.srcObject = stream;
-
-    // Handle video element errors
-    videoElement.onloadedmetadata = () => {
-      videoElement.play();
-    };
-
-    videoElement.onerror = (err) => {
-      console.error('Error loading camera stream:', err);
-      resultDiv.innerHTML = 'Error accessing the camera. Please check permissions.';
-    };
-
-  } catch (error) {
-    console.error('Error accessing the camera:', error);
-    resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
-  }
-}
-
   </script>
 
 </body>
