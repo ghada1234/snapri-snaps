@@ -78,7 +78,7 @@
           });
 
           const recognizedText = result.data.text;
-          console.log('Recognized Text:', recognizedText);  // Log recognized text
+          console.log('Recognized Text:', recognizedText);  // Log the recognized text
 
           if (recognizedText.trim() === '') {
             resultDiv.innerHTML = 'No ingredients detected. Please upload a clearer image.';
@@ -103,6 +103,9 @@
       const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
 
       try {
+        // Format ingredients to avoid multiple spaces or extra commas
+        const formattedIngredients = ingredients.split(',').map(item => item.trim()).join(', ');
+
         const response = await fetch(url, {
           method: 'POST',
           headers: {
@@ -110,11 +113,11 @@
             'x-app-key': apiKey,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: ingredients }),
+          body: JSON.stringify({ query: formattedIngredients }),
         });
 
         const data = await response.json();
-        console.log('Nutritionix API Response:', data);  // Log the entire response for debugging
+        console.log('Nutritionix API Response:', data);  // Log the API response for debugging
 
         if (data.foods && data.foods[0]) {
           const food = data.foods[0];
