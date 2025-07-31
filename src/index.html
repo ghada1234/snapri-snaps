@@ -103,8 +103,10 @@
       const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
 
       try {
-        // Format ingredients to avoid multiple spaces or extra commas
+        // Clean and format the recognized ingredients (remove extra spaces and commas)
         const formattedIngredients = ingredients.split(',').map(item => item.trim()).join(', ');
+
+        console.log("Formatted Ingredients:", formattedIngredients);
 
         const response = await fetch(url, {
           method: 'POST',
