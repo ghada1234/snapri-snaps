@@ -74,11 +74,11 @@
         // Run OCR to extract text from the image
         try {
           const result = await Tesseract.recognize(imageData, 'eng', {
-            logger: (m) => console.log(m),
+            logger: (m) => console.log(m),  // Log progress of OCR
           });
 
           const recognizedText = result.data.text;
-          console.log('Recognized Text:', recognizedText);
+          console.log('Recognized Text:', recognizedText);  // Log recognized text
 
           if (recognizedText.trim() === '') {
             resultDiv.innerHTML = 'No ingredients detected. Please upload a clearer image.';
@@ -97,8 +97,8 @@
 
     // Function to fetch nutritional info from Nutritionix API
     async function getNutritionalInfo(ingredients) {
-      const apiKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your Nutritionix API Key
-      const appId = 'bbd2d85e'; // Replace with your Nutritionix App ID
+      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';  // Replace with your actual API key
+      const appId = 'bbd2d85e';  // Replace with your actual App ID
 
       const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
 
@@ -114,7 +114,7 @@
         });
 
         const data = await response.json();
-        console.log('Nutritionix API Response:', data);
+        console.log('Nutritionix API Response:', data);  // Log the entire response for debugging
 
         if (data.foods && data.foods[0]) {
           const food = data.foods[0];
