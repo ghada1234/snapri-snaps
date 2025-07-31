@@ -40,7 +40,7 @@
   <p>Capture an image of your meal and let us analyze its nutritional information!</p>
 
   <!-- Video feed for the camera -->
-  <video id="video" autoplay></video>
+  <video id="video" autoplay width="640" height="480" style="border: 1px solid black;"></video>
   
   <!-- Button to capture meal -->
   <button id="capture">Capture Meal</button>
@@ -66,8 +66,23 @@
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
+
+        // Check if the video element is loaded
+        const videoElement = document.getElementById('video');
+        videoElement.srcObject = stream;
+
+        // Handle video element errors
+        videoElement.onloadedmetadata = () => {
+          videoElement.play();
+        };
+
+        videoElement.onerror = (err) => {
+          console.error('Error loading camera stream:', err);
+          resultDiv.innerHTML = 'Error accessing the camera. Please check permissions.';
+        };
+
       } catch (error) {
+        console.error('Error accessing the camera:', error);
         resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
       }
     }
