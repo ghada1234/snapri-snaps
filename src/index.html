@@ -5,92 +5,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meal Analyzer</title>
   <style>
-    #video { 
-      border: 1px solid black; 
-      width: 100%; 
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
     }
-    #result { 
-      margin-top: 20px; 
+    #video {
+      border: 1px solid black;
+      width: 80%;
+      margin-bottom: 20px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
+
   <h1>Meal Analyzer</h1>
+  <p>Capture an image of your meal and let us analyze its nutritional information!</p>
 
-  <!-- Video feed to display the camera -->
+  <!-- Video feed for the camera -->
   <video id="video" autoplay></video>
-
-  <!-- Capture button to take a snapshot -->
+  
+  <!-- Button to capture meal -->
   <button id="capture">Capture Meal</button>
 
-  <!-- Hidden canvas to process image data -->
+  <!-- Hidden canvas to capture image data -->
   <canvas id="canvas" style="display: none;"></canvas>
 
-  <!-- Results will be displayed here -->
+  <!-- Area to display the results -->
   <div id="result"></div>
 
-  <!-- Add Tesseract.js for OCR -->
+  <!-- Tesseract.js for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
 
   <script>
-    // Access the camera and display the live feed
+    // Get references to HTML elements
     const video = document.getElementById('video');
     const captureButton = document.getElementById('capture');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const resultDiv = document.getElementById('result');
 
-    // Function to start the camera
+    // Start the camera feed
     async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (error) {
+        resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
+      }
     }
 
-    // Capture image from the camera feed
+    // Capture the image when the button is clicked
     captureButton.addEventListener('click', () => {
-      // Set canvas size to match video size
+      // Set canvas size to match the video feed dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+
+      // Draw the current video frame onto the canvas
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Get image data in base64 format
+
+      // Convert the image to base64 format for OCR processing
       const imageData = canvas.toDataURL('image/jpeg');
-      
-      // Analyze the meal from the captured image
+
+      // Analyze the captured meal image
       analyzeMeal(imageData);
     });
 
     // Start the camera feed when the page loads
     startCamera();
 
-    // Use Tesseract.js to perform OCR and extract text (ingredients)
+    // Analyze the meal image using Tesseract.js for OCR
     async function analyzeMeal(imageData) {
+      resultDiv.innerHTML = 'Analyzing image... Please wait.';
+      
       try {
         const result = await Tesseract.recognize(imageData, 'eng', {
-          logger: (m) => console.log(m), // Logs progress in console
+          logger: (m) => console.log(m),
         });
-        
+
         const recognizedText = result.data.text;
         console.log('Recognized Text:', recognizedText);
 
-        // Now, send the recognized ingredients to Nutritionix API for nutrition analysis
+        // Now, get nutritional information for the recognized ingredients
         getNutritionalInfo(recognizedText);
       } catch (error) {
-        console.error('Error analyzing the image:', error);
+        console.error('Error during OCR processing:', error);
+        resultDiv.innerHTML = 'Error processing the image. Please try again.';
       }
     }
 
-    // Function to get nutritional data from Nutritionix API
+    // Function to get nutritional info from Nutritionix API
     async function getNutritionalInfo(ingredients) {
-      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';
-      const appId = 'bbd2d85e';  // Replace with your Nutritionix App ID
+      if (!ingredients) {
+        resultDiv.innerHTML = 'No ingredients detected. Please capture a clear image.';
+        return;
+      }
+
+      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';  // Replace with your API key
+      const appId = 'bbd2d85e';  // Replace with your app ID
 
       const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'x-app-id': appId,  // Replace with your app ID
+          'x-app-id': appId,
           'x-app-key': apiKey,
           'Content-Type': 'application/json',
         },
@@ -98,8 +134,8 @@
       });
 
       const data = await response.json();
-      
-      // Handle API response and display results
+
+      // Handle the response and display nutritional info
       if (data.foods && data.foods[0]) {
         displayNutritionalInfo(data.foods[0]);
       } else {
@@ -107,7 +143,7 @@
       }
     }
 
-    // Function to display nutritional information
+    // Function to display nutritional information on the page
     function displayNutritionalInfo(food) {
       resultDiv.innerHTML = `
         <h3>Meal Analysis</h3>
@@ -120,5 +156,6 @@
       `;
     }
   </script>
+
 </body>
 </html>
