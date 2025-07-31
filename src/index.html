@@ -145,6 +145,12 @@
         const recognizedText = result.data.text;
         console.log('Recognized Text:', recognizedText);
 
+        // Check if recognized text contains ingredients
+        if (recognizedText.trim() === '') {
+          resultDiv.innerHTML = 'No ingredients detected. Please try again with a clearer image.';
+          return;
+        }
+
         // Now, get nutritional information based on recognized text and preferences
         getNutritionalInfo(recognizedText);
       } catch (error) {
@@ -178,14 +184,17 @@
         body: JSON.stringify({ query: ingredients }),
       });
 
+      // Check the API response
       const data = await response.json();
 
-      // Display results based on meal type and preferences
+      console.log('Nutritionix API Response:', data);  // Log the full API response for troubleshooting
+
+      // Handle empty or malformed responses
       if (data.foods && data.foods[0]) {
         const food = data.foods[0];
         displayNutritionalInfo(food, mealType, preferences);
       } else {
-        resultDiv.innerHTML = 'Could not retrieve nutritional information. Please try again.';
+        resultDiv.innerHTML = 'Could not retrieve nutritional information. Please check the ingredients or try again.';
       }
     }
 
