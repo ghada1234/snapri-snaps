@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini Meal Analyzer - 2-Direction Camera</title>
+  <title>Meal Analyzer - Upload Image</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
       text-align: center;
-    }
-    #video {
-      border: 1px solid black;
-      width: 80%;
-      margin-bottom: 20px;
     }
     #result {
       margin-top: 20px;
@@ -32,40 +27,23 @@
     button:hover {
       background-color: #45a049;
     }
-    select {
+    input[type="file"] {
       padding: 10px;
       font-size: 16px;
-      width: 60%;
       margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Gemini Meal Analyzer - 2-Direction Camera</h1>
-  <p>Capture your meal from either front or rear camera and analyze its nutritional information!</p>
+  <h1>Meal Analyzer - Upload Image</h1>
+  <p>Upload an image of your meal, and we'll analyze the ingredients and nutritional information!</p>
 
-  <!-- Dropdown for meal type -->
-  <label for="mealType">Select Meal Type:</label>
-  <select id="mealType">
-    <option value="breakfast">Breakfast</option>
-    <option value="lunch">Lunch</option>
-    <option value="dinner">Dinner</option>
-    <option value="snack">Snack</option>
-     <option value="dessert">Dessert</option>
-  </select>
+  <!-- Input for image upload -->
+  <input type="file" id="imageInput" accept="image/*" />
 
-  <!-- Video feed for the camera -->
-  <video id="video" autoplay></video>
-  
-  <!-- Button to capture meal -->
-  <button id="capture">Capture Meal</button>
-
-  <!-- Button to switch between front and rear camera -->
-  <button id="switchCamera">Switch Camera</button>
-
-  <!-- Hidden canvas to capture image data -->
-  <canvas id="canvas" style="display: none;"></canvas>
+  <!-- Button to start analysis -->
+  <button id="analyzeButton">Analyze Meal</button>
 
   <!-- Area to display the results -->
   <div id="result"></div>
@@ -74,96 +52,51 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
 
   <script>
-    let currentStream = null;
-    let currentCamera = 0; // 0 for rear, 1 for front camera
-    const video = document.getElementById('video');
-    const captureButton = document.getElementById('capture');
-    const switchButton = document.getElementById('switchCamera');
-    const canvas = document.getElementById('canvas');
-    const context = canvas.getContext('2d');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const imageInput = document.getElementById('imageInput');
     const resultDiv = document.getElementById('result');
-    const mealTypeSelect = document.getElementById('mealType');
 
-    // Start the camera feed
-    async function startCamera(cameraIndex = 0) {
-      // Stop current stream if it's active
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-      }
-
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-        if (videoDevices.length > 0) {
-          const constraints = {
-            video: { deviceId: videoDevices[cameraIndex].deviceId }
-          };
-
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          video.srcObject = stream;
-          currentStream = stream;
-        } else {
-          resultDiv.innerHTML = 'No camera found.';
-        }
-      } catch (error) {
-        console.error('Error accessing the camera:', error);
-        resultDiv.innerHTML = 'Error accessing the camera. Please ensure you have granted permission.';
-      }
-    }
-
-    // Capture the image when the button is clicked
-    captureButton.addEventListener('click', () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/jpeg');
-      analyzeMeal(imageData);
-    });
-
-    // Switch between front and rear camera
-    switchButton.addEventListener('click', () => {
-      currentCamera = (currentCamera + 1) % 2;  // Toggle between 0 and 1
-      startCamera(currentCamera);
-    });
-
-    // Start the camera feed when the page loads (default to rear camera)
-    startCamera(currentCamera);
-
-    // Analyze the meal image using Tesseract.js for OCR
-    async function analyzeMeal(imageData) {
-      resultDiv.innerHTML = 'Analyzing image... Please wait.';
-      try {
-        const result = await Tesseract.recognize(imageData, 'eng', {
-          logger: (m) => console.log(m),
-        });
-
-        const recognizedText = result.data.text;
-        console.log('Recognized Text:', recognizedText);
-
-        // Check if recognized text contains ingredients
-        if (recognizedText.trim() === '') {
-          resultDiv.innerHTML = 'No ingredients detected. Please try again with a clearer image.';
-          return;
-        }
-
-        // Now, get nutritional information based on recognized text
-        getNutritionalInfo(recognizedText);
-      } catch (error) {
-        console.error('Error during OCR processing:', error);
-        resultDiv.innerHTML = 'Error processing the image. Please try again.';
-      }
-    }
-
-    // Function to get nutritional info from Nutritionix API
-    async function getNutritionalInfo(ingredients) {
-      if (!ingredients) {
-        resultDiv.innerHTML = 'No ingredients detected. Please capture a clear image.';
+    // Handle image upload and analysis
+    analyzeButton.addEventListener('click', () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        resultDiv.innerHTML = "Please upload an image first.";
         return;
       }
 
-      const mealType = mealTypeSelect.value;
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+        const imageData = event.target.result;
 
+        // Show analyzing message
+        resultDiv.innerHTML = 'Analyzing image... Please wait.';
+
+        // Run OCR to extract text from the image
+        try {
+          const result = await Tesseract.recognize(imageData, 'eng', {
+            logger: (m) => console.log(m),
+          });
+
+          const recognizedText = result.data.text;
+          console.log('Recognized Text:', recognizedText);
+
+          if (recognizedText.trim() === '') {
+            resultDiv.innerHTML = 'No ingredients detected. Please upload a clearer image.';
+            return;
+          }
+
+          // Now get nutritional info from Nutritionix
+          getNutritionalInfo(recognizedText);
+        } catch (error) {
+          console.error('Error during OCR processing:', error);
+          resultDiv.innerHTML = 'Error processing the image. Please try again.';
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Function to fetch nutritional info from Nutritionix API
+    async function getNutritionalInfo(ingredients) {
       const apiKey = '0dc5923a5187ebfbbec4376879ce2155'; // Replace with your Nutritionix API Key
       const appId = 'bbd2d85e'; // Replace with your Nutritionix App ID
 
@@ -181,13 +114,11 @@
         });
 
         const data = await response.json();
-
-        // Log the API response for debugging
         console.log('Nutritionix API Response:', data);
 
         if (data.foods && data.foods[0]) {
           const food = data.foods[0];
-          displayNutritionalInfo(food, mealType);
+          displayNutritionalInfo(food);
         } else {
           resultDiv.innerHTML = 'Could not retrieve nutritional information. Please check the ingredients or try again.';
         }
@@ -197,10 +128,10 @@
       }
     }
 
-    // Function to display nutritional information
-    function displayNutritionalInfo(food, mealType) {
+    // Display the nutritional information
+    function displayNutritionalInfo(food) {
       resultDiv.innerHTML = `
-        <h3>${mealType.charAt(0).toUpperCase() + mealType.slice(1)} Analysis</h3>
+        <h3>Meal Analysis</h3>
         <p><strong>Ingredients:</strong> ${food.food_name}</p>
         <p><strong>Calories:</strong> ${food.nf_calories} kcal</p>
         <p><strong>Protein:</strong> ${food.nf_protein}g</p>
