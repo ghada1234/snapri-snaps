@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Directional Camera Capture & Analyze</title>
+    <style>
+        video {
+            border: 1px solid #ddd;
+            display: block;
+            margin-bottom: 10px;
+        }
+        #canvas {
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Camera Feed</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="captureButton">Capture</button>
+    <button id="switchCameraButton">Switch Camera</button>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <img id="capturedImage" alt="Captured Image" style="display: none; margin-top: 20px;"/>
+    <div id="analysisResult" style="margin-top: 20px;"></div>
+
+    <script>
+        // Elements
+        const videoElement = document.getElementById('video');
+        const captureButton = document.getElementById('captureButton');
+        const switchCameraButton = document.getElementById('switchCameraButton');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const capturedImage = document.getElementById('capturedImage');
+        const analysisResult = document.getElementById('analysisResult');
+
+        let currentStream;
+        let currentCamera = 'user'; // Default to front camera
+
+        // Start camera stream
+        async function startCamera() {
+            // Stop previous stream if exists
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: currentCamera, // Switch between 'user' (front) and 'environment' (back)
+                }
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = currentStream;
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+            }
+        }
+
+        // Switch between front and back cameras
+        switchCameraButton.addEventListener('click', () => {
+            currentCamera = (currentCamera === 'user') ? 'environment' : 'user';
+            startCamera();
+        });
+
+        // Capture button click
+        captureButton.addEventListener('click', () => {
+            // Draw the video frame onto the canvas
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            // Show the captured image
+            const imageUrl = canvas.toDataURL('image/png');
+            capturedImage.src = imageUrl;
+            capturedImage.style.display = 'block'; // Show the captured image
+
+            // Analyze the image (Placeholder for image analysis)
+            analyzeImage(imageUrl);
+        });
+
+        // Placeholder function for analyzing the captured image
+        function analyzeImage(imageUrl) {
+            // Example: Placeholder function to analyze the image (e.g., using an API like Nutritionix or a machine learning model)
+            analysisResult.innerHTML = "Analyzing your image... (this is a placeholder analysis)";
+
+            // Simulating analysis result after a delay
+            setTimeout(() => {
+                analysisResult.innerHTML = `
+                    <strong>Analysis Results:</strong>
+                    <p>This is a placeholder. Actual analysis would give information on the food, nutritional facts, etc.</p>
+                    <img src="${imageUrl}" alt="Analyzed Image" width="200"/>
+                `;
+            }, 2000); // Simulating 2-second delay for analysis
+        }
+
+        // Start camera when the page is loaded
+        startCamera();
+    </script>
+</body>
+</html>

@@ -1,23 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
-
+// frontend/src/App.js
+import React, { useState } from 'react';
+import axios from 'axios';
+import Profile from './components/Profile'; 
+import MealAnalyzer from './components/MealAnalyzer'; 
+import MealUpload from './components/MealUpload'
 function App() {
+ 
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Profile></Profile><MealAnalyzer></MealAnalyzer>
+     <MealUpload></MealUpload>
+     
     </div>
   );
 }

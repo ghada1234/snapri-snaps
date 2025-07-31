@@ -1,0 +1,119 @@
+/* General Styling */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Center the app */
+h1 {
+  text-align: center;
+  color: #007BFF;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Input styles */
+input[type="file"] {
+  display: block;
+  margin: 20px auto;
+  background-color: #007BFF;
+  color: white;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+
+input[type="file"]:hover {
+  background-color: #0056b3;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin: 10px 0;
+  box-sizing: border-box;
+}
+
+textarea:focus {
+  border-color: #007BFF;
+}
+
+/* Buttons */
+button {
+  background-color: #007BFF;
+  color: white;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  display: block;
+  margin: 20px auto;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #007BFF;
+}
+
+/* Error message */
+.error {
+  color: red;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Nutritional information */
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul li {
+  padding: 10px;
+  background-color: #f1f1f1;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+ul li strong {
+  color: #333;
+}
+
+/* Recognized text from OCR */
+h2 {
+  color: #007BFF;
+}
+
+p {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin: 10px 0;
+}

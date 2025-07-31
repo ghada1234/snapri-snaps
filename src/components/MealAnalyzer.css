@@ -1,0 +1,162 @@
+/* Global Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2 {
+  color: #333;
+}
+
+/* Container for the meal analyzer */
+.meal-analyzer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 50px;
+}
+
+.meal-analyzer h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+/* Form Styles */
+.meal-analyzer form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.meal-analyzer input {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.meal-analyzer select {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.meal-analyzer button {
+  padding: 12px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.meal-analyzer button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.meal-analyzer button:hover {
+  background-color: #45a049;
+}
+
+/* Meal Log Styles */
+.meal-log {
+  margin-top: 40px;
+}
+
+.meal-log h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.meal-log ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.meal-log li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.meal-log li p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.meal-log button {
+  padding: 8px 15px;
+  background-color: #d9534f;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.meal-log button:hover {
+  background-color: #c9302c;
+}
+
+.meal-log button + button {
+  background-color: #f0ad4e;
+  margin-left: 10px;
+}
+
+.meal-log button + button:hover {
+  background-color: #ec971f;
+}
+
+/* Nutrition Data */
+.nutrition-data {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #e9f7df;
+  border-radius: 8px;
+  border: 1px solid #d6e8b8;
+}
+
+.nutrition-data h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.nutrition-data p {
+  font-size: 16px;
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+/* New Micronutrients Section */
+.nutrition-data h3 {
+  margin-top: 20px;
+}
+
+.nutrition-data p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.meal-log button {
+  margin-right: 10px;
+}
