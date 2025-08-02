@@ -1,83 +1,51 @@
-const captureButton = document.getElementById('capture-btn');
-const videoElement = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const context = canvas.getContext('2d');
-const nutritionInfoDiv = document.getElementById('nutrition-info');
+// app.js
 
-// Access the camera
-navigator.mediaDevices.getUserMedia({ video: true })
-    .then((stream) => {
-        videoElement.srcObject = stream;
-    })
-    .catch((error) => {
-        console.error('Error accessing camera:', error);
-    });
-
-// Capture image from the camera when the user clicks the button
-captureButton.addEventListener('click', () => {
-    // Draw the current video frame on the canvas
-    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+// Basic Ingredient Analysis
+document.getElementById("analyzeBtn").addEventListener("click", function() {
+    const ingredient = document.getElementById("ingredient").value;
     
-    // Convert the canvas to an image URL
-    const imageDataUrl = canvas.toDataURL('image/jpeg');
-
-    // Call your image recognition API (Nutritionix, Clarifai, Google Vision API, etc.)
-    analyzeImage(imageDataUrl);
+    if (ingredient) {
+        fetchNutritionData(ingredient);
+        fetchRecipeSuggestions(ingredient);
+    }
 });
 
-// Analyze the captured image
-async function analyzeImage(imageDataUrl) {
-    // API setup (replace with your own API keys and URL)
-    const apiUrl = 'YOUR_IMAGE_RECOGNITION_API_URL';  // Replace with actual URL for food image recognition
-    const appId = 'YOUR_APP_ID';  // Your Nutritionix App ID or equivalent
-    const appKey = 'YOUR_APP_KEY';  // Your Nutritionix App Key or equivalent
-
-    const requestData = {
-        image: imageDataUrl, // The image data URL from the camera
-    };
-
+async function fetchNutritionData(ingredient) {
+    const nutritionApiUrl = `https://api.spoonacular.com/food/ingredients/${ingredient}/information?apiKey=YOUR_API_KEY`;
     try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'x-app-id': appId,
-                'x-app-key': appKey,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
-        });
-
+        const response = await fetch(nutritionApiUrl);
         const data = await response.json();
-        displayNutritionInfo(data);  // Display the nutritional data on the page
+        
+        // Display nutritional info
+        document.getElementById("calories").innerText = `Calories: ${data.nutrition.calories}`;
+        document.getElementById("protein").innerText = `Protein: ${data.nutrition.protein}g`;
+        document.getElementById("carbs").innerText = `Carbs: ${data.nutrition.carbs}g`;
+        document.getElementById("fat").innerText = `Fat: ${data.nutrition.fat}g`;
     } catch (error) {
-        console.error('Error analyzing image:', error);
-        alert('Error analyzing image. Please try again.');
+        console.error("Error fetching nutritional data:", error);
     }
 }
 
-// Display the nutrition information
-function displayNutritionInfo(data) {
-    nutritionInfoDiv.innerHTML = '';
-
-    if (data.foods && data.foods.length > 0) {
-        const food = data.foods[0];
-
-        const nutritionList = `
-            <h2>Nutrition Information for ${food.food_name}</h2>
-            <ul>
-                <li><strong>Calories:</strong> ${food.nf_calories} kcal</li>
-                <li><strong>Protein:</strong> ${food.nf_protein} g</li>
-                <li><strong>Carbohydrates:</strong> ${food.nf_total_carbohydrate} g</li>
-                <li><strong>Fat:</strong> ${food.nf_total_fat} g</li>
-                <li><strong>Fiber:</strong> ${food.nf_dietary_fiber} g</li>
-                <li><strong>Sugars:</strong> ${food.nf_sugars} g</li>
-            </ul>
-        `;
-
-        nutritionInfoDiv.innerHTML = nutritionList;
-        nutritionInfoDiv.style.display = 'block';
-    } else {
-        nutritionInfoDiv.innerHTML = `<p>No data found for the recognized food. Please try again with a clearer image.</p>`;
-        nutritionInfoDiv.style.display = 'block';
+async function fetchRecipeSuggestions(ingredient) {
+    const recipeApiUrl = `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${ingredient}&apiKey=YOUR_API_KEY`;
+    try {
+        const response = await fetch(recipeApiUrl);
+        const data = await response.json();
+        
+        // Display recipe suggestions
+        const recipesList = document.getElementById("recipesList");
+        recipesList.innerHTML = "";
+        data.forEach(recipe => {
+            const li = document.createElement("li");
+            li.textContent = recipe.title;
+            recipesList.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Error fetching recipe suggestions:", error);
     }
 }
+
+// Barcode Scanning (optional, using an external API or library like QuaggaJS)
+document.getElementById("barcodeInput").addEventListener("change", function(event) {
+    // Handle barcode image file and extract information (using an API or library like QuaggaJS)
+});
