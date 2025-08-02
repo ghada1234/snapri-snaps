@@ -1,151 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meal Analyzer - Upload Image</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 1.2em;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    input[type="file"] {
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Analyzer</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <h1>Food Analyzer</h1>
+        
+        <!-- Input Fields for Ingredients -->
+        <div class="input-section">
+            <h2>Enter Ingredients</h2>
+            <input type="text" id="ingredient" placeholder="e.g., Chicken Breast">
+            <button id="analyzeBtn">Analyze</button>
+        </div>
+        
+        <!-- Nutritional Info Section -->
+        <div class="nutrition-info" id="nutritionInfo">
+            <h2>Nutritional Info</h2>
+            <p id="calories"></p>
+            <p id="protein"></p>
+            <p id="carbs"></p>
+            <p id="fat"></p>
+        </div>
 
-  <h1>Meal Analyzer - Upload Image</h1>
-  <p>Upload an image of your meal, and we'll analyze the ingredients and nutritional information!</p>
+        <!-- Recipe Suggestions Section -->
+        <div class="recipe-suggestions" id="recipeSuggestions">
+            <h2>Suggested Recipes</h2>
+            <ul id="recipesList"></ul>
+        </div>
 
-  <!-- Input for image upload -->
-  <input type="file" id="imageInput" accept="image/*" />
+        <!-- Barcode Scanner Section (optional) -->
+        <div class="scanner-section">
+            <h2>Scan Barcode (Optional)</h2>
+            <input type="file" id="barcodeInput" accept="image/*">
+        </div>
+    </div>
 
-  <!-- Button to start analysis -->
-  <button id="analyzeButton">Analyze Meal</button>
-
-  <!-- Area to display the results -->
-  <div id="result"></div>
-
-  <!-- Tesseract.js for OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1"></script>
-
-  <script>
-    const analyzeButton = document.getElementById('analyzeButton');
-    const imageInput = document.getElementById('imageInput');
-    const resultDiv = document.getElementById('result');
-
-    // Handle image upload and analysis
-    analyzeButton.addEventListener('click', () => {
-      const file = imageInput.files[0];
-      if (!file) {
-        resultDiv.innerHTML = "Please upload an image first.";
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = async function(event) {
-        const imageData = event.target.result;
-
-        // Show analyzing message
-        resultDiv.innerHTML = 'Analyzing image... Please wait.';
-
-        // Run OCR to extract text from the image
-        try {
-          const result = await Tesseract.recognize(imageData, 'eng', {
-            logger: (m) => console.log(m),  // Log progress of OCR
-          });
-
-          const recognizedText = result.data.text;
-          console.log('Recognized Text:', recognizedText);  // Log the recognized text
-
-          if (recognizedText.trim() === '') {
-            resultDiv.innerHTML = 'No ingredients detected. Please upload a clearer image.';
-            return;
-          }
-
-          // Now get nutritional info from Nutritionix
-          getNutritionalInfo(recognizedText);
-        } catch (error) {
-          console.error('Error during OCR processing:', error);
-          resultDiv.innerHTML = 'Error processing the image. Please try again.';
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Function to fetch nutritional info from Nutritionix API
-    async function getNutritionalInfo(ingredients) {
-      const apiKey = '0dc5923a5187ebfbbec4376879ce2155';  // Replace with your actual API key
-      const appId = 'bbd2d85e';  // Replace with your actual App ID
-
-      const url = 'https://trackapi.nutritionix.com/v2/natural/nutrients';
-
-      try {
-        // Clean and format the recognized ingredients (remove extra spaces and commas)
-        const formattedIngredients = ingredients.split(',').map(item => item.trim()).join(', ');
-
-        console.log("Formatted Ingredients:", formattedIngredients);
-
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'x-app-id': appId,
-            'x-app-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query: formattedIngredients }),
-        });
-
-        const data = await response.json();
-        console.log('Nutritionix API Response:', data);  // Log the API response for debugging
-
-        if (data.foods && data.foods[0]) {
-          const food = data.foods[0];
-          displayNutritionalInfo(food);
-        } else {
-          resultDiv.innerHTML = 'Could not retrieve nutritional information. Please check the ingredients or try again.';
-        }
-      } catch (error) {
-        console.error('Error fetching nutritional data:', error);
-        resultDiv.innerHTML = 'Error fetching nutritional information. Please try again later.';
-      }
-    }
-
-    // Display the nutritional information
-    function displayNutritionalInfo(food) {
-      resultDiv.innerHTML = `
-        <h3>Meal Analysis</h3>
-        <p><strong>Ingredients:</strong> ${food.food_name}</p>
-        <p><strong>Calories:</strong> ${food.nf_calories} kcal</p>
-        <p><strong>Protein:</strong> ${food.nf_protein}g</p>
-        <p><strong>Carbs:</strong> ${food.nf_total_carbohydrate}g</p>
-        <p><strong>Fat:</strong> ${food.nf_total_fat}g</p>
-        <p><strong>Serving Size:</strong> ${food.serving_size_qty} ${food.serving_size_unit}</p>
-      `;
-    }
-  </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
